@@ -7,18 +7,18 @@ import { useRouter } from "vue-router";
 const auth = useAuthStore();
 const router = useRouter();
 
-const patient = ref(null);
-const upcomingAppointments = ref([]);
-const recentRecords = ref([]);
+const staff = ref(null);
+const totalPatients = ref(0);
+const todaysAppointments = ref([]);
 const loading = ref(true);
 const error = ref("");
 
 async function fetchDashboard() {
   try {
     const { data } = await api.get("/dashboard");
-    patient.value = data.patient;
-    upcomingAppointments.value = data.upcoming_appointments;
-    recentRecords.value = data.recent_records;
+    staff.value = data.staff;
+    totalPatients.value = data.total_patients;
+    todaysAppointments.value = data.todays_appointments;
   } catch (e) {
     error.value = "Failed to load dashboard";
   } finally {
@@ -43,28 +43,21 @@ onMounted(fetchDashboard);
     <p v-else-if="error">{{ error }}</p>
 
     <div v-else>
-      <h2>Welcome, {{ patient?.full_name }}</h2>
-      <p>Blood Type: {{ patient?.blood_type }}</p>
+      <h2>Welcome, {{ staff?.name }}</h2>
+      <p>Role: {{ staff?.role }}</p>
+      <p>Total Patients: {{ totalPatients }}</p>
 
-      <h3>Upcoming Appointments</h3>
+      <h3>Today's Appointments</h3>
       <ul>
-        <li v-for="appt in upcomingAppointments" :key="appt.id">
+        <li v-for="appt in todaysAppointments" :key="appt.id">
           {{ appt.doctor_name }} — {{ appt.department }} —
           {{ new Date(appt.scheduled_at).toLocaleString() }}
         </li>
       </ul>
-      <p v-if="!upcomingAppointments.length">No upcoming appointments.</p>
-
-      <h3>Recent Medical Records</h3>
-      <ul>
-        <li v-for="record in recentRecords" :key="record.id">
-          {{ record.title }} ({{ record.record_type }}) —
-          {{ record.recorded_at }}
-        </li>
-      </ul>
-      <p v-if="!recentRecords.length">No recent records.</p>
+      <p v-if="!todaysAppointments.length">No appointments today.</p>
 
       <nav>
+        <router-link to="/patients">Patients</router-link> |
         <router-link to="/appointments">Appointments</router-link> |
         <router-link to="/doctors">Doctors</router-link> |
         <router-link to="/medical-records">Medical Records</router-link>
