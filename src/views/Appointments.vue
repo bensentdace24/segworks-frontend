@@ -3,17 +3,29 @@ import { ref, onMounted } from "vue";
 import api from "../api/client";
 
 const appointments = ref([]);
+const doctors = ref([]);
+const patients = ref([]);
 const loading = ref(true);
 const error = ref("");
 
-// form state
 const form = ref({
-  doctor_name: "",
+  patient_id: "",
+  doctor_id: "",
   department: "",
   scheduled_at: "",
   notes: "",
 });
 const editingId = ref(null);
+
+async function fetchDoctors() {
+  const { data } = await api.get("/doctors-list");
+  doctors.value = data;
+}
+
+async function fetchPatients() {
+  const { data } = await api.get("/patients");
+  patients.value = data;
+}
 
 async function fetchAppointments() {
   loading.value = true;
@@ -44,9 +56,10 @@ async function submitForm() {
 function startEdit(appt) {
   editingId.value = appt.id;
   form.value = {
-    doctor_name: appt.doctor_name,
+    patient_id: appt.patient_id,
+    doctor_id: appt.doctor_id,
     department: appt.department,
-    scheduled_at: appt.scheduled_at.slice(0, 16), // format for datetime-local input
+    scheduled_at: appt.scheduled_at.slice(0, 16),
     notes: appt.notes,
     status: appt.status,
   };
@@ -60,10 +73,20 @@ async function deleteAppointment(id) {
 
 function resetForm() {
   editingId.value = null;
-  form.value = { doctor_name: "", department: "", scheduled_at: "", notes: "" };
+  form.value = {
+    patient_id: "",
+    doctor_id: "",
+    department: "",
+    scheduled_at: "",
+    notes: "",
+  };
 }
 
-onMounted(fetchAppointments);
+onMounted(() => {
+  fetchDoctors();
+  fetchPatients();
+  fetchAppointments();
+});
 </script>
 
 <template>
@@ -73,16 +96,33 @@ onMounted(fetchAppointments);
 
     <form @submit.prevent="submitForm">
       <h3>{{ editingId ? "Edit" : "New" }} Appointment</h3>
-      <input v-model="form.doctor_name" placeholder="Doctor Name" required />
+
+      <select v-model="form.patient_id" required>
+        <option value="">Select Patient</option>
+        <option v-for="p in patients" :key="p.id" :value="p.id">
+          {{ p.full_name }} ({{ p.phn }})
+        </option>
+      </select>
+
+      <select v-model="form.doctor_id">
+        <option value="">Select Doctor</option>
+        <option v-for="doc in doctors" :key="doc.id" :value="doc.id">
+          {{ doc.name }}
+        </option>
+      </select>
+
       <input v-model="form.department" placeholder="Department" />
       <input v-model="form.scheduled_at" type="datetime-local" required />
+
       <select v-if="editingId" v-model="form.status">
         <option value="pending">Pending</option>
         <option value="confirmed">Confirmed</option>
         <option value="completed">Completed</option>
         <option value="cancelled">Cancelled</option>
       </select>
+
       <textarea v-model="form.notes" placeholder="Notes"></textarea>
+
       <button type="submit">{{ editingId ? "Update" : "Book" }}</button>
       <button v-if="editingId" type="button" @click="resetForm">Cancel</button>
     </form>
@@ -92,6 +132,7 @@ onMounted(fetchAppointments);
 
     <table v-else border="1" cellpadding="6">
       <tr>
+        <th>Patient</th>
         <th>Doctor</th>
         <th>Department</th>
         <th>Date</th>
@@ -99,7 +140,8 @@ onMounted(fetchAppointments);
         <th>Actions</th>
       </tr>
       <tr v-for="appt in appointments" :key="appt.id">
-        <td>{{ appt.doctor_name }}</td>
+        <td>{{ appt.patient?.full_name || "—" }}</td>
+        <td>{{ appt.doctor?.name || "Unassigned" }}</td>
         <td>{{ appt.department }}</td>
         <td>{{ new Date(appt.scheduled_at).toLocaleString() }}</td>
         <td>{{ appt.status }}</td>

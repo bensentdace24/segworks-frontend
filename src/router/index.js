@@ -6,6 +6,7 @@ import Dashboard from "../views/Dashboard.vue";
 import Appointments from "../views/Appointments.vue";
 import Doctors from "../views/Doctors.vue";
 import MedicalRecords from "../views/MedicalRecords.vue";
+import Patients from "../views/Patients.vue";
 
 const routes = [
   { path: "/login", component: Login },
@@ -19,6 +20,13 @@ const routes = [
   {
     path: "/medical-records",
     component: MedicalRecords,
+    meta: { requiresAuth: true },
+  },
+
+  //Patients route
+  {
+    path: "/patients",
+    component: Patients,
     meta: { requiresAuth: true },
   },
 ];

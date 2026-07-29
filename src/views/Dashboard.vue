@@ -10,6 +10,7 @@ const router = useRouter();
 const staff = ref(null);
 const totalPatients = ref(0);
 const todaysAppointments = ref([]);
+const myUpcomingAppointments = ref([]);
 const loading = ref(true);
 const error = ref("");
 
@@ -17,8 +18,13 @@ async function fetchDashboard() {
   try {
     const { data } = await api.get("/dashboard");
     staff.value = data.staff;
-    totalPatients.value = data.total_patients;
-    todaysAppointments.value = data.todays_appointments;
+
+    if (data.staff.role === "doctor") {
+      myUpcomingAppointments.value = data.my_upcoming_appointments;
+    } else {
+      totalPatients.value = data.total_patients;
+      todaysAppointments.value = data.todays_appointments;
+    }
   } catch (e) {
     error.value = "Failed to load dashboard";
   } finally {
@@ -45,16 +51,56 @@ onMounted(fetchDashboard);
     <div v-else>
       <h2>Welcome, {{ staff?.name }}</h2>
       <p>Role: {{ staff?.role }}</p>
-      <p>Total Patients: {{ totalPatients }}</p>
 
-      <h3>Today's Appointments</h3>
-      <ul>
-        <li v-for="appt in todaysAppointments" :key="appt.id">
-          {{ appt.doctor_name }} — {{ appt.department }} —
-          {{ new Date(appt.scheduled_at).toLocaleString() }}
-        </li>
-      </ul>
-      <p v-if="!todaysAppointments.length">No appointments today.</p>
+      <!-- DOCTOR VIEW -->
+      <div v-if="staff?.role === 'doctor'">
+        <h3>My Upcoming Appointments</h3>
+        <table border="1" cellpadding="6">
+          <tr>
+            <th>Patient</th>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
+          <tr v-for="appt in myUpcomingAppointments" :key="appt.id">
+            <td>{{ appt.patient?.full_name }} ({{ appt.patient?.phn }})</td>
+            <td>{{ new Date(appt.scheduled_at).toLocaleString() }}</td>
+            <td>{{ appt.status }}</td>
+          </tr>
+        </table>
+        <p v-if="!myUpcomingAppointments.length">No upcoming appointments.</p>
+      </div>
+
+      <!-- RECEPTIONIST / FRONT DESK VIEW -->
+      <div v-else>
+        <h3>Front Desk Overview</h3>
+        <p><strong>Total Patients:</strong> {{ totalPatients }}</p>
+
+        <h4>Today's Appointments</h4>
+        <table border="1" cellpadding="6">
+          <tr>
+            <th>Patient</th>
+            <th>Doctor</th>
+            <th>Time</th>
+            <th>Status</th>
+          </tr>
+          <tr v-for="appt in todaysAppointments" :key="appt.id">
+            <td>{{ appt.patient?.full_name }}</td>
+            <td>{{ appt.doctor?.name || "Unassigned" }}</td>
+            <td>{{ new Date(appt.scheduled_at).toLocaleTimeString() }}</td>
+            <td>{{ appt.status }}</td>
+          </tr>
+        </table>
+        <p v-if="!todaysAppointments.length">No appointments today.</p>
+
+        <div>
+          <router-link to="/patients">
+            <button>+ New Patient</button>
+          </router-link>
+          <router-link to="/appointments">
+            <button>+ New Appointment</button>
+          </router-link>
+        </div>
+      </div>
 
       <nav>
         <router-link to="/patients">Patients</router-link> |
