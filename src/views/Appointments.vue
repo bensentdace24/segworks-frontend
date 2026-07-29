@@ -13,10 +13,11 @@ const patients = ref([]);
 const loading = ref(true);
 const error = ref("");
 const showForm = ref(false);
+const initialLoad = ref(true);
 
 const form = ref({
   patient_id: "",
-  doctor_id: "",
+  doctor_name: "",
   department: "",
   scheduled_at: "",
   notes: "",
@@ -24,7 +25,7 @@ const form = ref({
 const editingId = ref(null);
 
 async function fetchDoctors() {
-  const { data } = await api.get("/doctors-list");
+  const { data } = await api.get("/doctors");
   doctors.value = data;
 }
 
@@ -42,6 +43,7 @@ async function fetchAppointments() {
     error.value = "Failed to load appointments";
   } finally {
     loading.value = false;
+    initialLoad.value = false;
   }
 }
 
@@ -177,12 +179,12 @@ onMounted(() => {
           </select>
 
           <select
-            v-model="form.doctor_id"
+            v-model="form.doctor_name"
             class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="">Select Doctor</option>
-            <option v-for="doc in doctors" :key="doc.id" :value="doc.id">
-              {{ doc.name }}
+            <option v-for="doc in doctors" :key="doc.id" :value="doc.name">
+              {{ doc.name }} — {{ doc.specialty }}
             </option>
           </select>
 
@@ -225,7 +227,7 @@ onMounted(() => {
       </div>
 
       <p v-if="error" class="text-red-600 text-sm mb-4">{{ error }}</p>
-      <p v-if="loading" class="text-slate-500">Loading...</p>
+      <p v-if="loading && initialLoad" class="text-slate-500">Loading...</p>
 
       <div
         v-else
@@ -249,7 +251,7 @@ onMounted(() => {
               <td class="px-4 py-3 font-medium text-ink">
                 {{ appt.patient?.full_name || "—" }}
               </td>
-              <td class="px-4 py-3">{{ appt.doctor?.name || "Unassigned" }}</td>
+              <td class="px-4 py-3">{{ appt.doctor_name || "Unassigned" }}</td>
               <td class="px-4 py-3">{{ appt.department }}</td>
               <td class="px-4 py-3">
                 {{ new Date(appt.scheduled_at).toLocaleString() }}

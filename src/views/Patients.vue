@@ -13,6 +13,8 @@ const loading = ref(true);
 const error = ref("");
 const showForm = ref(false);
 
+const editingId = ref(null);
+
 const form = ref({
   full_name: "",
   date_of_birth: "",
@@ -36,22 +38,44 @@ async function fetchPatients() {
   }
 }
 
-async function addPatient() {
+async function submitForm() {
   try {
-    await api.post("/patients", form.value);
-    form.value = {
-      full_name: "",
-      date_of_birth: "",
-      gender: "",
-      phone: "",
-      address: "",
-      blood_type: "",
-    };
-    showForm.value = false;
+    if (editingId.value) {
+      await api.put(`/patients/${editingId.value}`, form.value);
+    } else {
+      await api.post("/patients", form.value);
+    }
+    resetForm();
     await fetchPatients();
   } catch (e) {
-    error.value = e.response?.data?.message || "Failed to add patient";
+    error.value = e.response?.data?.message || "Save failed";
   }
+}
+
+function startEdit(patient) {
+  editingId.value = patient.id;
+  showForm.value = true;
+  form.value = {
+    full_name: patient.full_name,
+    date_of_birth: patient.date_of_birth?.slice(0, 10),
+    gender: patient.gender,
+    phone: patient.phone,
+    address: patient.address,
+    blood_type: patient.blood_type,
+  };
+}
+
+function resetForm() {
+  editingId.value = null;
+  showForm.value = false;
+  form.value = {
+    full_name: "",
+    date_of_birth: "",
+    gender: "",
+    phone: "",
+    address: "",
+    blood_type: "",
+  };
 }
 
 function logout() {
@@ -127,10 +151,10 @@ onMounted(fetchPatients);
         class="bg-white rounded-xl border border-slate-200 p-6 mb-6"
       >
         <h3 class="font-display text-lg font-semibold text-ink mb-4">
-          New Patient
+          {{ editingId ? "Edit" : "New" }} Patient
         </h3>
         <form
-          @submit.prevent="addPatient"
+          @submit.prevent="submitForm"
           class="grid grid-cols-1 sm:grid-cols-2 gap-4"
         >
           <input
@@ -169,7 +193,7 @@ onMounted(fetchPatients);
             type="submit"
             class="bg-primary-600 hover:bg-primary-700 transition-colors text-white text-sm font-medium rounded-lg py-2 sm:col-span-2"
           >
-            Add Patient
+            {{ editingId ? "Update" : "Add" }} Patient
           </button>
         </form>
       </div>
@@ -191,6 +215,7 @@ onMounted(fetchPatients);
               <th class="px-4 py-3">DOB</th>
               <th class="px-4 py-3">Gender</th>
               <th class="px-4 py-3">Phone</th>
+              <th class="px-4 py-3">Actions</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -205,7 +230,16 @@ onMounted(fetchPatients);
                 {{ patient.date_of_birth?.slice(0, 10) }}
               </td>
               <td class="px-4 py-3">{{ patient.gender }}</td>
-              <td class="px-4 py-3">{{ patient.phone }}</td>
+
+              <td class="px-4 py-3">
+                <!-- Action button -->
+                <button
+                  @click="startEdit(patient)"
+                  class="text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  Edit
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>

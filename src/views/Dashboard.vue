@@ -13,6 +13,10 @@ const todaysAppointments = ref([]);
 const myUpcomingAppointments = ref([]);
 const loading = ref(true);
 const error = ref("");
+const initialLoad = ref(true);
+
+//fetch the notif
+const notifications = ref([]);
 
 async function fetchDashboard() {
   try {
@@ -20,15 +24,17 @@ async function fetchDashboard() {
     staff.value = data.staff;
 
     if (data.staff.role === "doctor") {
-      myUpcomingAppointments.value = data.my_upcoming_appointments;
+      myUpcomingAppointments.value = data.my_upcoming_appointments || [];
     } else {
-      totalPatients.value = data.total_patients;
-      todaysAppointments.value = data.todays_appointments;
+      totalPatients.value = data.total_patients || 0;
+      todaysAppointments.value = data.todays_appointments || [];
+      notifications.value = data.notifications || [];
     }
   } catch (e) {
     error.value = "Failed to load dashboard";
   } finally {
     loading.value = false;
+    initialLoad.value = false;
   }
 }
 
@@ -72,7 +78,7 @@ onMounted(fetchDashboard);
     </header>
 
     <main class="max-w-6xl mx-auto px-6 py-8">
-      <p v-if="loading" class="text-slate-500">Loading...</p>
+      <p v-if="loading && initialLoad" class="text-slate-500">Loading...</p>
       <p v-else-if="error" class="text-red-600">{{ error }}</p>
 
       <div v-else>
@@ -85,6 +91,25 @@ onMounted(fetchDashboard);
           >
             {{ staff?.role }}
           </span>
+        </div>
+
+        <!-- this is for the notification-->
+        <div v-if="notifications.length" class="mb-6 space-y-2">
+          <div
+            v-for="(note, i) in notifications"
+            :key="i"
+            class="flex items-center gap-2 px-4 py-3 rounded-lg text-sm"
+            :class="
+              note.type === 'alert'
+                ? 'bg-accent-500/10 text-accent-600'
+                : 'bg-primary-50 text-primary-700'
+            "
+          >
+            <span class="font-medium">{{
+              note.type === "alert" ? "⚠" : "🔔"
+            }}</span>
+            {{ note.message }}
+          </div>
         </div>
 
         <!-- DOCTOR VIEW -->
@@ -180,7 +205,7 @@ onMounted(fetchDashboard);
                 <tr v-for="appt in todaysAppointments" :key="appt.id">
                   <td class="px-4 py-3">{{ appt.patient?.full_name }}</td>
                   <td class="px-4 py-3">
-                    {{ appt.doctor?.name || "Unassigned" }}
+                    {{ appt.doctor_name || "Unassigned" }}
                   </td>
                   <td class="px-4 py-3">
                     {{ new Date(appt.scheduled_at).toLocaleTimeString() }}

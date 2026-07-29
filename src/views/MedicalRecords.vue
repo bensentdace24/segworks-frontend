@@ -9,11 +9,13 @@ const router = useRouter();
 
 const records = ref([]);
 const loading = ref(true);
+const initialLoad = ref(true);
 
 async function fetchRecords() {
   const { data } = await api.get("/medical-records");
   records.value = data;
   loading.value = false;
+  initialLoad.value = false;
 }
 
 function logout() {
@@ -61,7 +63,7 @@ onMounted(fetchRecords);
         Medical Records
       </h2>
 
-      <p v-if="loading" class="text-slate-500">Loading...</p>
+      <p v-if="loading && initialLoad" class="text-slate-500">Loading...</p>
 
       <div
         v-else
