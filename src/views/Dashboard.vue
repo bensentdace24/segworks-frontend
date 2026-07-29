@@ -41,73 +41,168 @@ onMounted(fetchDashboard);
 </script>
 
 <template>
-  <div>
-    <button @click="logout">Logout</button>
-    <h1>Dashboard</h1>
-
-    <p v-if="loading">Loading...</p>
-    <p v-else-if="error">{{ error }}</p>
-
-    <div v-else>
-      <h2>Welcome, {{ staff?.name }}</h2>
-      <p>Role: {{ staff?.role }}</p>
-
-      <!-- DOCTOR VIEW -->
-      <div v-if="staff?.role === 'doctor'">
-        <h3>My Upcoming Appointments</h3>
-        <table border="1" cellpadding="6">
-          <tr>
-            <th>Patient</th>
-            <th>Date</th>
-            <th>Status</th>
-          </tr>
-          <tr v-for="appt in myUpcomingAppointments" :key="appt.id">
-            <td>{{ appt.patient?.full_name }} ({{ appt.patient?.phn }})</td>
-            <td>{{ new Date(appt.scheduled_at).toLocaleString() }}</td>
-            <td>{{ appt.status }}</td>
-          </tr>
-        </table>
-        <p v-if="!myUpcomingAppointments.length">No upcoming appointments.</p>
+  <div class="min-h-screen bg-surface">
+    <!-- Top nav -->
+    <header class="bg-white border-b border-slate-200">
+      <div
+        class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between"
+      >
+        <h1 class="font-display text-xl font-semibold text-primary-700">
+          SegHIS
+        </h1>
+        <nav class="flex items-center gap-6 text-sm font-medium text-slate-600">
+          <router-link to="/" class="text-primary-700">Dashboard</router-link>
+          <router-link to="/patients" class="hover:text-primary-700"
+            >Patients</router-link
+          >
+          <router-link to="/appointments" class="hover:text-primary-700"
+            >Appointments</router-link
+          >
+          <router-link to="/doctors" class="hover:text-primary-700"
+            >Doctors</router-link
+          >
+          <router-link to="/medical-records" class="hover:text-primary-700"
+            >Medical Records</router-link
+          >
+          <button @click="logout" class="text-slate-400 hover:text-red-600">
+            Logout
+          </button>
+        </nav>
       </div>
+    </header>
 
-      <!-- RECEPTIONIST / FRONT DESK VIEW -->
+    <main class="max-w-6xl mx-auto px-6 py-8">
+      <p v-if="loading" class="text-slate-500">Loading...</p>
+      <p v-else-if="error" class="text-red-600">{{ error }}</p>
+
       <div v-else>
-        <h3>Front Desk Overview</h3>
-        <p><strong>Total Patients:</strong> {{ totalPatients }}</p>
+        <div class="mb-8">
+          <h2 class="font-display text-2xl font-semibold text-ink">
+            Welcome, {{ staff?.name }}
+          </h2>
+          <span
+            class="inline-block mt-1 text-xs font-medium uppercase tracking-wide text-primary-700 bg-primary-50 px-2 py-1 rounded"
+          >
+            {{ staff?.role }}
+          </span>
+        </div>
 
-        <h4>Today's Appointments</h4>
-        <table border="1" cellpadding="6">
-          <tr>
-            <th>Patient</th>
-            <th>Doctor</th>
-            <th>Time</th>
-            <th>Status</th>
-          </tr>
-          <tr v-for="appt in todaysAppointments" :key="appt.id">
-            <td>{{ appt.patient?.full_name }}</td>
-            <td>{{ appt.doctor?.name || "Unassigned" }}</td>
-            <td>{{ new Date(appt.scheduled_at).toLocaleTimeString() }}</td>
-            <td>{{ appt.status }}</td>
-          </tr>
-        </table>
-        <p v-if="!todaysAppointments.length">No appointments today.</p>
+        <!-- DOCTOR VIEW -->
+        <div v-if="staff?.role === 'doctor'">
+          <h3 class="font-display text-lg font-semibold text-ink mb-4">
+            My Upcoming Appointments
+          </h3>
+          <div
+            class="bg-white rounded-xl border border-slate-200 overflow-hidden"
+          >
+            <table class="w-full text-sm">
+              <thead
+                class="bg-slate-50 text-left text-slate-500 text-xs uppercase tracking-wide"
+              >
+                <tr>
+                  <th class="px-4 py-3">Patient</th>
+                  <th class="px-4 py-3">Date</th>
+                  <th class="px-4 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr v-for="appt in myUpcomingAppointments" :key="appt.id">
+                  <td class="px-4 py-3">
+                    {{ appt.patient?.full_name }}
+                    <span class="text-slate-400"
+                      >({{ appt.patient?.phn }})</span
+                    >
+                  </td>
+                  <td class="px-4 py-3">
+                    {{ new Date(appt.scheduled_at).toLocaleString() }}
+                  </td>
+                  <td class="px-4 py-3">
+                    <span
+                      class="inline-block px-2 py-1 rounded-full text-xs font-medium bg-primary-50 text-primary-700"
+                      >{{ appt.status }}</span
+                    >
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <p
+              v-if="!myUpcomingAppointments.length"
+              class="px-4 py-6 text-center text-slate-400 text-sm"
+            >
+              No upcoming appointments.
+            </p>
+          </div>
+        </div>
 
-        <div>
-          <router-link to="/patients">
-            <button>+ New Patient</button>
-          </router-link>
-          <router-link to="/appointments">
-            <button>+ New Appointment</button>
-          </router-link>
+        <!-- RECEPTIONIST / FRONT DESK VIEW -->
+        <div v-else>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white rounded-xl border border-slate-200 p-5">
+              <p class="text-xs uppercase tracking-wide text-slate-400 mb-1">
+                Total Patients
+              </p>
+              <p class="font-display text-3xl font-semibold text-ink">
+                {{ totalPatients }}
+              </p>
+            </div>
+            <router-link
+              to="/patients"
+              class="bg-primary-600 hover:bg-primary-700 transition-colors rounded-xl p-5 flex items-center justify-center text-white font-medium text-sm"
+            >
+              + New Patient
+            </router-link>
+            <router-link
+              to="/appointments"
+              class="bg-accent-500 hover:bg-accent-600 transition-colors rounded-xl p-5 flex items-center justify-center text-white font-medium text-sm"
+            >
+              + New Appointment
+            </router-link>
+          </div>
+
+          <h3 class="font-display text-lg font-semibold text-ink mb-4">
+            Today's Appointments
+          </h3>
+          <div
+            class="bg-white rounded-xl border border-slate-200 overflow-hidden"
+          >
+            <table class="w-full text-sm">
+              <thead
+                class="bg-slate-50 text-left text-slate-500 text-xs uppercase tracking-wide"
+              >
+                <tr>
+                  <th class="px-4 py-3">Patient</th>
+                  <th class="px-4 py-3">Doctor</th>
+                  <th class="px-4 py-3">Time</th>
+                  <th class="px-4 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr v-for="appt in todaysAppointments" :key="appt.id">
+                  <td class="px-4 py-3">{{ appt.patient?.full_name }}</td>
+                  <td class="px-4 py-3">
+                    {{ appt.doctor?.name || "Unassigned" }}
+                  </td>
+                  <td class="px-4 py-3">
+                    {{ new Date(appt.scheduled_at).toLocaleTimeString() }}
+                  </td>
+                  <td class="px-4 py-3">
+                    <span
+                      class="inline-block px-2 py-1 rounded-full text-xs font-medium bg-primary-50 text-primary-700"
+                      >{{ appt.status }}</span
+                    >
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <p
+              v-if="!todaysAppointments.length"
+              class="px-4 py-6 text-center text-slate-400 text-sm"
+            >
+              No appointments today.
+            </p>
+          </div>
         </div>
       </div>
-
-      <nav>
-        <router-link to="/patients">Patients</router-link> |
-        <router-link to="/appointments">Appointments</router-link> |
-        <router-link to="/doctors">Doctors</router-link> |
-        <router-link to="/medical-records">Medical Records</router-link>
-      </nav>
-    </div>
+    </main>
   </div>
 </template>
