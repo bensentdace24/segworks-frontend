@@ -3,6 +3,17 @@ import { ref, onMounted } from "vue";
 import api from "../api/client";
 import { useAuthStore } from "../stores/auth";
 import { useRouter } from "vue-router";
+const showConsultation = ref(false);
+
+const consultation = ref({
+  diagnosis: "",
+  consultation_notes: "",
+  prescription: "",
+  treatment_plan: "",
+  follow_up_instructions: "",
+});
+
+const consultationAppointment = ref(null);
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -17,7 +28,7 @@ const initialLoad = ref(true);
 
 const form = ref({
   patient_id: "",
-  doctor_name: "",
+  doctor_id: "",
   department: "",
   scheduled_at: "",
   notes: "",
@@ -26,6 +37,7 @@ const editingId = ref(null);
 
 async function fetchDoctors() {
   const { data } = await api.get("/doctors");
+  console.log(data); // <-- add this
   doctors.value = data;
 }
 
@@ -57,7 +69,8 @@ async function submitForm() {
     resetForm();
     await fetchAppointments();
   } catch (e) {
-    error.value = e.response?.data?.message || "Save failed";
+    console.log(e.response.data);
+    alert(JSON.stringify(e.response.data, null, 2));
   }
 }
 
@@ -97,12 +110,32 @@ function logout() {
   router.push("/login");
 }
 
+function startConsultation(appt) {
+  consultationAppointment.value = appt;
+  showConsultation.value = true;
+}
+
 const statusStyles = {
   pending: "bg-slate-100 text-slate-600",
   confirmed: "bg-primary-50 text-primary-700",
   completed: "bg-emerald-50 text-emerald-700",
   cancelled: "bg-red-50 text-red-700",
 };
+
+async function submitConsultation() {
+  try {
+    await api.post(
+      `/appointments/${consultationAppointment.value.id}/consult`,
+      consultation.value,
+    );
+
+    showConsultation.value = false;
+
+    await fetchAppointments();
+  } catch (e) {
+    alert("Consultation failed.");
+  }
+}
 
 onMounted(() => {
   fetchDoctors();
@@ -179,11 +212,11 @@ onMounted(() => {
           </select>
 
           <select
-            v-model="form.doctor_name"
+            v-model="form.doctor_id"
             class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="">Select Doctor</option>
-            <option v-for="doc in doctors" :key="doc.id" :value="doc.name">
+            <option v-for="doc in doctors" :key="doc.id" :value="doc.id">
               {{ doc.name }} — {{ doc.specialty }}
             </option>
           </select>
@@ -251,7 +284,7 @@ onMounted(() => {
               <td class="px-4 py-3 font-medium text-ink">
                 {{ appt.patient?.full_name || "—" }}
               </td>
-              <td class="px-4 py-3">{{ appt.doctor_name || "Unassigned" }}</td>
+              <td class="px-4 py-3">{{ appt.doctor?.name || "Unassigned" }}</td>
               <td class="px-4 py-3">{{ appt.department }}</td>
               <td class="px-4 py-3">
                 {{ new Date(appt.scheduled_at).toLocaleString() }}
@@ -275,6 +308,13 @@ onMounted(() => {
                   class="text-red-500 hover:text-red-600 font-medium"
                 >
                   Delete
+                </button>
+                <button
+                  v-if="appt.status !== 'completed'"
+                  @click="startConsultation(appt)"
+                  class="text-green-600 font-medium"
+                >
+                  Consult
                 </button>
               </td>
             </tr>

@@ -7,6 +7,7 @@ import Appointments from "../views/Appointments.vue";
 import Doctors from "../views/Doctors.vue";
 import MedicalRecords from "../views/MedicalRecords.vue";
 import Patients from "../views/Patients.vue";
+import Consultation from "../views/Consultations.vue";
 
 const routes = [
   { path: "/login", component: Login },
@@ -27,6 +28,13 @@ const routes = [
   {
     path: "/patients",
     component: Patients,
+    meta: { requiresAuth: true },
+  },
+
+  //consultation
+  {
+    path: "/consultations",
+    component: Consultation,
     meta: { requiresAuth: true },
   },
 ];
