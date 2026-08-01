@@ -91,12 +91,8 @@ onMounted(fetchDashboard);
             Patients
           </router-link>
 
-          <router-link
-            v-if="['receptionist', 'admin'].includes(auth.user?.role)"
-            to="/appointments"
-            class="hover:text-primary-700"
-          >
-            Appointments
+          <router-link v-if="auth.user?.role === 'doctor'" to="/consultation">
+            Consultation
           </router-link>
 
           <router-link
@@ -239,6 +235,7 @@ onMounted(fetchDashboard);
                   </td>
                   <td class="px-4 py-3">
                     <router-link
+                      v-if="!['completed', 'cancelled'].includes(appt.status)"
                       :to="{
                         path: '/consultation',
                         query: { appointment: appt.id },

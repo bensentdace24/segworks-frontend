@@ -2,7 +2,9 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import api from "../api/client";
+import { useRoute } from "vue-router";
 
+const route = useRoute();
 const appointments = ref([]);
 const loading = ref(true);
 const error = ref("");
@@ -25,7 +27,20 @@ async function fetchAppointments() {
   try {
     const { data } = await api.get("/appointments");
 
-    appointments.value = data.filter((a) => a.status !== "completed");
+    appointments.value = data.filter(
+      (appointment) => !["completed", "cancelled"].includes(appointment.status),
+    );
+    const appointmentId = Number(route.query.appointment);
+
+    if (appointmentId) {
+      const matchingAppointment = appointments.value.find(
+        (appointment) => appointment.id === appointmentId,
+      );
+
+      if (matchingAppointment) {
+        openConsultation(matchingAppointment);
+      }
+    }
   } catch (e) {
     error.value = "Unable to load appointments.";
   } finally {

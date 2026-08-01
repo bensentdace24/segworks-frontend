@@ -39,14 +39,6 @@ const routes = [
     },
   },
   {
-    path: "/patients/:id",
-    component: PatientProfile,
-    meta: {
-      requiresAuth: true,
-      roles: ["receptionist", "doctor", "nurse", "admin"],
-    },
-  },
-  {
     path: "/appointments",
     component: Appointments,
     meta: {
@@ -63,12 +55,32 @@ const routes = [
     },
   },
   {
+    path: "/patients",
+    component: Patients,
+    meta: {
+      requiresAuth: true,
+      roles: ["receptionist", "doctor", "nurse", "admin"],
+    },
+  },
+  {
+    path: "/patients/:id",
+    component: PatientProfile,
+    meta: {
+      requiresAuth: true,
+      roles: ["receptionist", "doctor", "nurse", "admin"],
+    },
+  },
+  {
     path: "/medical-records",
     component: MedicalRecords,
     meta: {
       requiresAuth: true,
-      roles: ["doctor", "nurse", "admin"],
+      roles: ["doctor", "admin"],
     },
+  },
+  {
+    path: "/:pathMatch(.*)*",
+    redirect: "/",
   },
 ];
 
@@ -81,20 +93,26 @@ router.beforeEach((to) => {
   const auth = useAuthStore();
 
   if (to.meta.requiresAuth && !auth.token) {
-    return {
-      path: "/login",
-      query: { redirect: to.fullPath },
-    };
+    return "/login";
   }
+  console.log("Navigation check:", {
+    destination: to.path,
+    requiresAuth: to.meta.requiresAuth,
+    allowedRoles: to.meta.roles,
+    currentRole: auth.user?.role,
+    hasToken: Boolean(auth.token),
+  });
 
   const allowedRoles = to.meta.roles;
   const userRole = auth.user?.role;
 
   if (allowedRoles && !allowedRoles.includes(userRole)) {
-    return "/";
-  }
+    console.log("Route blocked:", {
+      destination: to.path,
+      userRole,
+      allowedRoles,
+    });
 
-  if (to.path === "/login" && auth.token) {
     return "/";
   }
 });

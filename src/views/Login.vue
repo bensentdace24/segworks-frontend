@@ -11,9 +11,16 @@ const router = useRouter();
 
 async function submit() {
   try {
-    await auth.login(email.value, password.value);
+    const result = await auth.login(email.value, password.value);
+
+    console.log("Login successful!");
+    console.log("Token:", localStorage.getItem("token"));
+    console.log("User:", JSON.parse(localStorage.getItem("user")));
+
     router.push("/");
   } catch (e) {
+    console.error(e);
+    console.log("Response:", e.response?.data);
     error.value = "Invalid email or password";
   }
 }
