@@ -6,6 +6,7 @@ import { useRouter } from "vue-router";
 
 const auth = useAuthStore();
 const router = useRouter();
+console.log(auth.user);
 
 const staff = ref(null);
 const totalPatients = ref(0);
@@ -14,6 +15,9 @@ const myUpcomingAppointments = ref([]);
 const loading = ref(true);
 const error = ref("");
 const initialLoad = ref(true);
+const totalUsers = ref(0);
+const totalAppointments = ref(0);
+const totalRecords = ref(0);
 
 //fetch the notif
 const notifications = ref([]);
@@ -21,16 +25,30 @@ const notifications = ref([]);
 async function fetchDashboard() {
   try {
     const { data } = await api.get("/dashboard");
+
     staff.value = data.staff;
 
-    if (data.staff.role === "doctor") {
+    if (data.staff.role === "admin") {
+      totalUsers.value = data.total_users || 0;
+      totalPatients.value = data.total_patients || 0;
+      totalAppointments.value = data.total_appointments || 0;
+      totalRecords.value = data.total_records || 0;
+    } else if (data.staff.role === "doctor") {
       myUpcomingAppointments.value = data.my_upcoming_appointments || [];
+
+      notifications.value = data.notifications || [];
     } else {
       totalPatients.value = data.total_patients || 0;
       todaysAppointments.value = data.todays_appointments || [];
       notifications.value = data.notifications || [];
     }
   } catch (e) {
+    if (e.response?.status === 401) {
+      await auth.logout();
+      await router.replace("/login");
+      return;
+    }
+
     error.value = "Failed to load dashboard";
   } finally {
     loading.value = false;
@@ -38,9 +56,9 @@ async function fetchDashboard() {
   }
 }
 
-function logout() {
-  auth.logout();
-  router.push("/login");
+async function logout() {
+  await auth.logout();
+  await router.replace("/login");
 }
 
 onMounted(fetchDashboard);
@@ -57,20 +75,63 @@ onMounted(fetchDashboard);
           SegHIS
         </h1>
         <nav class="flex items-center gap-6 text-sm font-medium text-slate-600">
-          <router-link to="/" class="text-primary-700">Dashboard</router-link>
-          <router-link to="/patients" class="hover:text-primary-700"
-            >Patients</router-link
+          <router-link to="/" class="hover:text-primary-700">
+            Dashboard
+          </router-link>
+
+          <router-link
+            v-if="
+              ['receptionist', 'doctor', 'nurse', 'admin'].includes(
+                auth.user?.role,
+              )
+            "
+            to="/patients"
+            class="hover:text-primary-700"
           >
-          <router-link to="/appointments" class="hover:text-primary-700"
-            >Appointments</router-link
+            Patients
+          </router-link>
+
+          <router-link
+            v-if="['receptionist', 'admin'].includes(auth.user?.role)"
+            to="/appointments"
+            class="hover:text-primary-700"
           >
-          <router-link to="/doctors" class="hover:text-primary-700"
-            >Doctors</router-link
+            Appointments
+          </router-link>
+
+          <router-link
+            v-if="
+              ['receptionist', 'doctor', 'nurse', 'admin'].includes(
+                auth.user?.role,
+              )
+            "
+            to="/doctors"
+            class="hover:text-primary-700"
           >
-          <router-link to="/medical-records" class="hover:text-primary-700"
-            >Medical Records</router-link
+            Doctors
+          </router-link>
+
+          <router-link
+            v-if="['doctor', 'nurse', 'admin'].includes(auth.user?.role)"
+            to="/medical-records"
+            class="hover:text-primary-700"
           >
-          <button @click="logout" class="text-slate-400 hover:text-red-600">
+            Medical Records
+          </router-link>
+
+          <router-link
+            v-if="auth.user?.role === 'doctor'"
+            to="/consultation"
+            class="hover:text-primary-700"
+          >
+            Consultation
+          </router-link>
+
+          <button
+            type="button"
+            @click="logout"
+            class="text-slate-400 hover:text-red-600"
+          >
             Logout
           </button>
         </nav>
@@ -111,9 +172,37 @@ onMounted(fetchDashboard);
             {{ note.message }}
           </div>
         </div>
+        <!-- ADMIN -->
+        <div v-if="staff?.role === 'admin'">
+          <h3 class="font-display text-lg font-semibold mb-6">
+            Admin Dashboard
+          </h3>
+
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-white rounded-xl border p-5">
+              <p class="text-sm text-slate-500">Users</p>
+              <p class="text-3xl font-bold">{{ totalUsers }}</p>
+            </div>
+
+            <div class="bg-white rounded-xl border p-5">
+              <p class="text-sm text-slate-500">Patients</p>
+              <p class="text-3xl font-bold">{{ totalPatients }}</p>
+            </div>
+
+            <div class="bg-white rounded-xl border p-5">
+              <p class="text-sm text-slate-500">Appointments</p>
+              <p class="text-3xl font-bold">{{ totalAppointments }}</p>
+            </div>
+
+            <div class="bg-white rounded-xl border p-5">
+              <p class="text-sm text-slate-500">Medical Records</p>
+              <p class="text-3xl font-bold">{{ totalRecords }}</p>
+            </div>
+          </div>
+        </div>
 
         <!-- DOCTOR VIEW -->
-        <div v-if="staff?.role === 'doctor'">
+        <div v-else-if="staff?.role === 'doctor'">
           <h3 class="font-display text-lg font-semibold text-ink mb-4">
             My Upcoming Appointments
           </h3>
@@ -128,6 +217,7 @@ onMounted(fetchDashboard);
                   <th class="px-4 py-3">Patient</th>
                   <th class="px-4 py-3">Date</th>
                   <th class="px-4 py-3">Status</th>
+                  <th class="px-4 py-3">Action</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100">
@@ -147,6 +237,17 @@ onMounted(fetchDashboard);
                       >{{ appt.status }}</span
                     >
                   </td>
+                  <td class="px-4 py-3">
+                    <router-link
+                      :to="{
+                        path: '/consultation',
+                        query: { appointment: appt.id },
+                      }"
+                      class="text-green-600 hover:text-green-700 font-medium"
+                    >
+                      Consult
+                    </router-link>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -160,7 +261,9 @@ onMounted(fetchDashboard);
         </div>
 
         <!-- RECEPTIONIST / FRONT DESK VIEW -->
-        <div v-else>
+        <div
+          v-else-if="staff?.role === 'receptionist' || staff?.role === 'nurse'"
+        >
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
             <div class="bg-white rounded-xl border border-slate-200 p-5">
               <p class="text-xs uppercase tracking-wide text-slate-400 mb-1">

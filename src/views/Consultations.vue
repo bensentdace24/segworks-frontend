@@ -117,5 +117,69 @@ onMounted(fetchAppointments);
         </tr>
       </tbody>
     </table>
+    <div
+      v-if="showModal"
+      class="fixed inset-0 bg-black/40 flex items-center justify-center"
+    >
+      <div class="bg-white w-[700px] rounded-lg p-6">
+        <h2 class="text-xl font-bold mb-4">Consultation</h2>
+
+        <p class="mb-4">
+          Patient:
+          <strong>{{ selectedAppointment.patient.full_name }}</strong>
+        </p>
+
+        <textarea
+          v-model="consultation.diagnosis"
+          placeholder="Diagnosis"
+          class="border p-2 rounded w-full mb-3"
+          rows="2"
+        ></textarea>
+
+        <textarea
+          v-model="consultation.consultation_notes"
+          placeholder="Consultation Notes"
+          class="border p-2 rounded w-full mb-3"
+          rows="3"
+        ></textarea>
+
+        <textarea
+          v-model="consultation.prescription"
+          placeholder="Prescription"
+          class="border p-2 rounded w-full mb-3"
+          rows="2"
+        ></textarea>
+
+        <textarea
+          v-model="consultation.treatment_plan"
+          placeholder="Treatment Plan"
+          class="border p-2 rounded w-full mb-3"
+          rows="2"
+        ></textarea>
+
+        <textarea
+          v-model="consultation.follow_up_instructions"
+          placeholder="Follow-up Instructions"
+          class="border p-2 rounded w-full mb-5"
+          rows="2"
+        ></textarea>
+
+        <div class="flex justify-end gap-3">
+          <button
+            @click="showModal = false"
+            class="px-4 py-2 bg-gray-300 rounded"
+          >
+            Cancel
+          </button>
+
+          <button
+            @click="submitConsultation"
+            class="px-4 py-2 bg-green-600 text-white rounded"
+          >
+            Save Consultation
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

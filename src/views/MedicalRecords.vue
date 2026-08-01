@@ -12,10 +12,19 @@ const loading = ref(true);
 const initialLoad = ref(true);
 
 async function fetchRecords() {
-  const { data } = await api.get("/medical-records");
-  records.value = data;
-  loading.value = false;
-  initialLoad.value = false;
+  try {
+    const { data } = await api.get("/medical-records");
+
+    console.log("Medical Records:", data);
+
+    records.value = data;
+  } catch (e) {
+    console.log(e.response?.data);
+    alert(JSON.stringify(e.response?.data, null, 2));
+  } finally {
+    loading.value = false;
+    initialLoad.value = false;
+  }
 }
 
 function logout() {

@@ -8,43 +8,94 @@ import Doctors from "../views/Doctors.vue";
 import MedicalRecords from "../views/MedicalRecords.vue";
 import Patients from "../views/Patients.vue";
 import Consultation from "../views/Consultations.vue";
+import PatientProfile from "../views/PatientProfile.vue";
 
 const routes = [
-  { path: "/login", component: Login },
-  { path: "/", component: Dashboard, meta: { requiresAuth: true } },
   {
-    path: "/appointments",
-    component: Appointments,
-    meta: { requiresAuth: true },
+    path: "/login",
+    component: Login,
   },
-  { path: "/doctors", component: Doctors, meta: { requiresAuth: true } },
   {
-    path: "/medical-records",
-    component: MedicalRecords,
-    meta: { requiresAuth: true },
+    path: "/",
+    component: Dashboard,
+    meta: {
+      requiresAuth: true,
+    },
   },
-
-  //Patients route
+  {
+    path: "/doctors",
+    component: Doctors,
+    meta: {
+      requiresAuth: true,
+      roles: ["receptionist", "doctor", "nurse", "admin"],
+    },
+  },
   {
     path: "/patients",
     component: Patients,
-    meta: { requiresAuth: true },
+    meta: {
+      requiresAuth: true,
+      roles: ["receptionist", "doctor", "nurse", "admin"],
+    },
   },
-
-  //consultation
   {
-    path: "/consultations",
+    path: "/patients/:id",
+    component: PatientProfile,
+    meta: {
+      requiresAuth: true,
+      roles: ["receptionist", "doctor", "nurse", "admin"],
+    },
+  },
+  {
+    path: "/appointments",
+    component: Appointments,
+    meta: {
+      requiresAuth: true,
+      roles: ["receptionist", "admin"],
+    },
+  },
+  {
+    path: "/consultation",
     component: Consultation,
-    meta: { requiresAuth: true },
+    meta: {
+      requiresAuth: true,
+      roles: ["doctor"],
+    },
+  },
+  {
+    path: "/medical-records",
+    component: MedicalRecords,
+    meta: {
+      requiresAuth: true,
+      roles: ["doctor", "nurse", "admin"],
+    },
   },
 ];
 
-const router = createRouter({ history: createWebHistory(), routes });
+const router = createRouter({
+  history: createWebHistory(),
+  routes,
+});
 
 router.beforeEach((to) => {
   const auth = useAuthStore();
+
   if (to.meta.requiresAuth && !auth.token) {
-    return "/login";
+    return {
+      path: "/login",
+      query: { redirect: to.fullPath },
+    };
+  }
+
+  const allowedRoles = to.meta.roles;
+  const userRole = auth.user?.role;
+
+  if (allowedRoles && !allowedRoles.includes(userRole)) {
+    return "/";
+  }
+
+  if (to.path === "/login" && auth.token) {
+    return "/";
   }
 });
 

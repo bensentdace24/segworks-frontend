@@ -37,7 +37,9 @@ const editingId = ref(null);
 
 async function fetchDoctors() {
   const { data } = await api.get("/doctors");
-  console.log(data); // <-- add this
+
+  console.log("Doctors from API:", data);
+
   doctors.value = data;
 }
 
@@ -79,7 +81,7 @@ function startEdit(appt) {
   showForm.value = true;
   form.value = {
     patient_id: appt.patient_id,
-    doctor_id: appt.doctor_id,
+    doctor_name: appt.doctor_name,
     department: appt.department,
     scheduled_at: appt.scheduled_at.slice(0, 16),
     notes: appt.notes,
@@ -98,7 +100,7 @@ function resetForm() {
   showForm.value = false;
   form.value = {
     patient_id: "",
-    doctor_id: "",
+    doctor_name: "",
     department: "",
     scheduled_at: "",
     notes: "",
@@ -211,13 +213,9 @@ onMounted(() => {
             </option>
           </select>
 
-          <select
-            v-model="form.doctor_id"
-            class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="">Select Doctor</option>
-            <option v-for="doc in doctors" :key="doc.id" :value="doc.id">
-              {{ doc.name }} — {{ doc.specialty }}
+          <select v-model="form.doctor_name">
+            <option v-for="doc in doctors" :key="doc.id" :value="doc.name">
+              {{ doc.name }} - {{ doc.specialty }}
             </option>
           </select>
 
@@ -284,7 +282,7 @@ onMounted(() => {
               <td class="px-4 py-3 font-medium text-ink">
                 {{ appt.patient?.full_name || "—" }}
               </td>
-              <td class="px-4 py-3">{{ appt.doctor?.name || "Unassigned" }}</td>
+              <td class="px-4 py-3">{{ appt.doctor_name || "Unassigned" }}</td>
               <td class="px-4 py-3">{{ appt.department }}</td>
               <td class="px-4 py-3">
                 {{ new Date(appt.scheduled_at).toLocaleString() }}
@@ -310,9 +308,8 @@ onMounted(() => {
                   Delete
                 </button>
                 <button
-                  v-if="appt.status !== 'completed'"
-                  @click="startConsultation(appt)"
-                  class="text-green-600 font-medium"
+                  @click="router.push(`/consultation/${appt.id}`)"
+                  class="text-green-600 font-semibold"
                 >
                   Consult
                 </button>

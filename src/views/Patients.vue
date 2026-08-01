@@ -229,10 +229,23 @@ onMounted(fetchPatients);
               <td class="px-4 py-3">
                 {{ patient.date_of_birth?.slice(0, 10) }}
               </td>
-              <td class="px-4 py-3">{{ patient.gender }}</td>
+              <td class="px-4 py-3">
+                {{ patient.gender }}
+              </td>
 
               <td class="px-4 py-3">
-                <!-- Action button -->
+                {{ patient.phone }}
+              </td>
+
+              <!--action button-->
+              <td class="px-4 py-3 space-x-3">
+                <router-link
+                  :to="`/patients/${patient.id}`"
+                  class="text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  View
+                </router-link>
+
                 <button
                   @click="startEdit(patient)"
                   class="text-primary-600 hover:text-primary-700 font-medium"

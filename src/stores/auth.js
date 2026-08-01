@@ -16,11 +16,22 @@ export const useAuthStore = defineStore("auth", {
       localStorage.setItem("user", JSON.stringify(data.user));
     },
     async logout() {
-      await api.post("/logout");
-      this.user = null;
-      this.token = null;
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      try {
+        // Attempt to revoke the token on Laravel.
+        if (this.token) {
+          await api.post("/logout");
+        }
+      } catch (error) {
+        // A 401 means the token was already expired or revoked.
+        console.warn("Server logout failed:", error.response?.status);
+      } finally {
+        // Always clear the frontend session.
+        this.user = null;
+        this.token = null;
+
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
     },
   },
 });
