@@ -52,6 +52,20 @@ async function submitForm() {
   }
 }
 
+//delete patient
+async function deletePatient(patient) {
+  if (!confirm(`Delete ${patient.full_name}?`)) {
+    return;
+  }
+
+  try {
+    await api.delete(`/patients/${patient.id}`);
+    await fetchPatients();
+  } catch (e) {
+    alert(e.response?.data?.message || "Unable to delete patient.");
+  }
+}
+
 function startEdit(patient) {
   editingId.value = patient.id;
   showForm.value = true;
@@ -251,6 +265,16 @@ onMounted(fetchPatients);
                   class="text-primary-600 hover:text-primary-700 font-medium"
                 >
                   Edit
+                </button>
+
+                <button
+                  v-if="
+                    ['receptionist', 'nurse', 'admin'].includes(auth.user?.role)
+                  "
+                  @click="deletePatient(patient)"
+                  class="text-red-600 hover:text-red-700 font-medium"
+                >
+                  Delete
                 </button>
               </td>
             </tr>

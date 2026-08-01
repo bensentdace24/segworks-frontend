@@ -108,7 +108,11 @@ onMounted(fetchDashboard);
           </router-link>
 
           <router-link
-            v-if="['doctor', 'nurse', 'admin'].includes(auth.user?.role)"
+            v-if="
+              ['receptionist', 'nurse', 'doctor', 'admin'].includes(
+                auth.user?.role,
+              )
+            "
             to="/medical-records"
             class="hover:text-primary-700"
           >

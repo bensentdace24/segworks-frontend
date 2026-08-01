@@ -75,7 +75,7 @@ const routes = [
     component: MedicalRecords,
     meta: {
       requiresAuth: true,
-      roles: ["doctor", "admin"],
+      roles: ["receptionist", "nurse", "doctor", "admin"],
     },
   },
   {
