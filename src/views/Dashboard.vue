@@ -888,11 +888,11 @@ onMounted(fetchDashboard);
 }
 .nav-item:hover {
   background: #f8fafc;
-  color: #0f766e;
+  color: #3478db;
 }
 .nav-item-active {
-  background: #f0fdfa;
-  color: #0f766e;
+  background: #eff6ff;
+  color: #285fae;
   font-weight: 700;
 }
 .nav-item-active::before {
@@ -902,23 +902,23 @@ onMounted(fetchDashboard);
   margin-left: -14px;
   margin-right: 11px;
   border-radius: 999px;
-  background: #0d9488;
+  background: #3478db;
 }
 .tone-teal {
-  background: #f0fdfa;
-  color: #0f766e;
+  background: #eff6ff;
+  color: #285fae;
 }
 .tone-blue {
   background: #eff6ff;
   color: #2563eb;
 }
 .tone-orange {
-  background: #fff7ed;
-  color: #ea580c;
+  background: #f0f5fd;
+  color: #7098dc;
 }
 .tone-violet {
-  background: #f5f3ff;
-  color: #7c3aed;
+  background: #f3f6fb;
+  color: #536f9f;
 }
 .status-pill {
   display: inline-flex;

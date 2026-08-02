@@ -220,11 +220,11 @@ async function logout() {
 <style scoped>
 .shell-nav-item:hover {
   background: #f8fafc;
-  color: #0f766e;
+  color: #3478db;
 }
 .shell-nav-active {
-  background: #f0fdfa;
-  color: #0f766e;
+  background: #eff6ff;
+  color: #285fae;
   font-weight: 700;
 }
 .shell-nav-active::before {
@@ -234,6 +234,6 @@ async function logout() {
   margin-left: -14px;
   margin-right: 11px;
   border-radius: 999px;
-  background: #0d9488;
+  background: #3478db;
 }
 </style>

@@ -3,14 +3,24 @@
 @source "./**/*.{vue,js,ts}";
 
 @theme {
-  --color-primary-50: #f0fdfa;
-  --color-primary-100: #ccfbf1;
-  --color-primary-500: #14b8a6;
-  --color-primary-600: #0f766e;
-  --color-primary-700: #115e59;
+  /* Segworks corporate blue palette */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-500: #3b7ddd;
+  --color-primary-600: #3478db;
+  --color-primary-700: #285fae;
 
-  --color-accent-500: #ea580c;
-  --color-accent-600: #c2410c;
+  --color-accent-500: #86aae6;
+  --color-accent-600: #7098dc;
+
+  /* Map existing teal utilities to the Segworks brand palette. */
+  --color-teal-50: #eff6ff;
+  --color-teal-100: #dbeafe;
+  --color-teal-300: #93b4eb;
+  --color-teal-400: #6f9ce3;
+  --color-teal-500: #3b7ddd;
+  --color-teal-600: #3478db;
+  --color-teal-700: #285fae;
 
   --color-surface: #f8fafc;
   --color-ink: #1e293b;

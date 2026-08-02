@@ -1,10 +1,13 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { computed, ref, onMounted } from "vue";
 import api from "../api/client";
 import { useAuthStore } from "../stores/auth";
 import AppShell from "../components/AppShell.vue";
 
 const auth = useAuthStore();
+const canManagePatients = computed(() =>
+  ["receptionist", "nurse", "admin"].includes(auth.user?.role),
+);
 
 const patients = ref([]);
 const search = ref("");
@@ -99,6 +102,7 @@ onMounted(fetchPatients);
       <div class="flex items-center justify-between mb-6">
         <h2 class="font-display text-2xl font-semibold text-ink">Patients</h2>
         <button
+          v-if="canManagePatients"
           @click="showForm = !showForm"
           class="bg-primary-600 hover:bg-primary-700 transition-colors text-white text-sm font-medium rounded-lg px-4 py-2"
         >
@@ -224,6 +228,7 @@ onMounted(fetchPatients);
                 </router-link>
 
                 <button
+                  v-if="canManagePatients"
                   @click="startEdit(patient)"
                   class="text-primary-600 hover:text-primary-700 font-medium"
                 >
@@ -231,9 +236,7 @@ onMounted(fetchPatients);
                 </button>
 
                 <button
-                  v-if="
-                    ['receptionist', 'nurse', 'admin'].includes(auth.user?.role)
-                  "
+                  v-if="canManagePatients"
                   @click="deletePatient(patient)"
                   class="text-red-600 hover:text-red-700 font-medium"
                 >
