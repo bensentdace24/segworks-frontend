@@ -1,8 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import api from "../api/client";
-import { useAuthStore } from "../stores/auth";
-import { useRouter } from "vue-router";
+import AppShell from "../components/AppShell.vue";
 const showConsultation = ref(false);
 
 const consultation = ref({
@@ -14,9 +13,6 @@ const consultation = ref({
 });
 
 const consultationAppointment = ref(null);
-
-const auth = useAuthStore();
-const router = useRouter();
 
 const appointments = ref([]);
 const doctors = ref([]);
@@ -107,11 +103,6 @@ function resetForm() {
   };
 }
 
-function logout() {
-  auth.logout();
-  router.push("/login");
-}
-
 function startConsultation(appt) {
   consultationAppointment.value = appt;
   showConsultation.value = true;
@@ -147,38 +138,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-surface">
-    <header class="bg-white border-b border-slate-200">
-      <div
-        class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between"
-      >
-        <h1 class="font-display text-xl font-semibold text-primary-700">
-          SegHIS
-        </h1>
-        <nav class="flex items-center gap-6 text-sm font-medium text-slate-600">
-          <router-link to="/" class="hover:text-primary-700"
-            >Dashboard</router-link
-          >
-          <router-link to="/patients" class="hover:text-primary-700"
-            >Patients</router-link
-          >
-          <router-link to="/appointments" class="text-primary-700"
-            >Appointments</router-link
-          >
-          <router-link to="/doctors" class="hover:text-primary-700"
-            >Doctors</router-link
-          >
-          <router-link to="/medical-records" class="hover:text-primary-700"
-            >Medical Records</router-link
-          >
-          <button @click="logout" class="text-slate-400 hover:text-red-600">
-            Logout
-          </button>
-        </nav>
-      </div>
-    </header>
-
-    <main class="max-w-6xl mx-auto px-6 py-8">
+  <AppShell title="Appointments" subtitle="Schedule and manage patient visits">
       <div class="flex items-center justify-between mb-6">
         <h2 class="font-display text-2xl font-semibold text-ink">
           Appointments
@@ -307,12 +267,6 @@ onMounted(() => {
                 >
                   Delete
                 </button>
-                <button
-                  @click="router.push(`/consultation/${appt.id}`)"
-                  class="text-green-600 font-semibold"
-                >
-                  Consult
-                </button>
               </td>
             </tr>
           </tbody>
@@ -324,6 +278,5 @@ onMounted(() => {
           No appointments found.
         </p>
       </div>
-    </main>
-  </div>
+  </AppShell>
 </template>

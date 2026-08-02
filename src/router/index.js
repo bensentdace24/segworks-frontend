@@ -43,7 +43,7 @@ const routes = [
     component: Appointments,
     meta: {
       requiresAuth: true,
-      roles: ["receptionist", "admin"],
+      roles: ["receptionist", "nurse", "admin"],
     },
   },
   {

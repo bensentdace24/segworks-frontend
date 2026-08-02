@@ -199,30 +199,12 @@ onMounted(fetchDashboard);
       class="fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-slate-200 bg-white transition-transform duration-300 lg:translate-x-0"
       :class="mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'"
     >
-      <div class="flex h-20 items-center gap-3 border-b border-slate-100 px-7">
-        <div
-          class="grid h-10 w-10 place-items-center rounded-xl bg-teal-600 text-white shadow-lg shadow-teal-600/20"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            class="h-6 w-6"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.2"
-          >
-            <path d="M12 3v18M3 12h18" stroke-linecap="round" />
-          </svg>
-        </div>
-        <div>
-          <p class="font-display text-xl font-bold leading-none text-slate-900">
-            SegHIS
-          </p>
-          <p
-            class="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-teal-600"
-          >
-            Health system
-          </p>
-        </div>
+      <div class="flex h-20 items-center gap-3 border-b border-slate-100 px-6">
+        <img
+          src="/segworks.jpg"
+          alt="Segworks Technologies Corporation"
+          class="h-16 w-16 rounded-lg object-contain"
+        />
         <button
           class="ml-auto rounded-lg p-2 text-slate-400 hover:bg-slate-100 lg:hidden"
           @click="mobileMenuOpen = false"

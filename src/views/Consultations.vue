@@ -3,6 +3,7 @@
 import { ref, onMounted } from "vue";
 import api from "../api/client";
 import { useRoute } from "vue-router";
+import AppShell from "../components/AppShell.vue";
 
 const route = useRoute();
 const appointments = ref([]);
@@ -85,116 +86,48 @@ onMounted(fetchAppointments);
 </script>
 
 <template>
-  <div class="p-6">
-    <h1 class="text-2xl font-bold mb-4">Doctor Consultations</h1>
+  <AppShell title="Consultation" subtitle="Review assigned patients and complete consultations">
+    <div class="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+      <div><h1 class="font-display text-2xl font-bold text-slate-900">Doctor consultations</h1><p class="mt-1 text-sm text-slate-500">Only active appointments assigned to your account are available here.</p></div>
+      <span class="w-fit rounded-full bg-teal-50 px-3 py-1.5 text-xs font-bold text-teal-700">{{ appointments.length }} ready</span>
+    </div>
 
-    <p v-if="loading">Loading...</p>
+    <div v-if="loading" class="space-y-3"><div v-for="item in 3" :key="item" class="h-20 animate-pulse rounded-2xl bg-slate-200"></div></div>
+    <div v-else-if="error" class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">{{ error }}</div>
 
-    <p v-if="error" class="text-red-500">
-      {{ error }}
-    </p>
+    <div v-else class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div class="hidden overflow-x-auto md:block">
+        <table class="w-full text-left text-sm">
+          <thead class="border-b border-slate-200 bg-slate-50/80 text-[11px] uppercase tracking-[0.12em] text-slate-400"><tr><th class="px-6 py-4 font-bold">Patient</th><th class="px-6 py-4 font-bold">Appointment</th><th class="px-6 py-4 font-bold">Status</th><th class="px-6 py-4 text-right font-bold">Action</th></tr></thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr v-for="appt in appointments" :key="appt.id" class="transition hover:bg-slate-50/70">
+              <td class="px-6 py-4"><div class="flex items-center gap-3"><div class="grid h-10 w-10 place-items-center rounded-full bg-sky-50 font-bold text-sky-700">{{ appt.patient?.full_name?.charAt(0) || 'P' }}</div><div><p class="font-semibold text-slate-800">{{ appt.patient?.full_name || 'Unknown patient' }}</p><p class="mt-0.5 text-xs text-slate-400">PHN {{ appt.patient?.phn || '—' }}</p></div></div></td>
+              <td class="px-6 py-4 font-medium text-slate-600">{{ new Date(appt.scheduled_at).toLocaleString() }}</td>
+              <td class="px-6 py-4"><span class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold capitalize text-amber-700">{{ appt.status }}</span></td>
+              <td class="px-6 py-4 text-right"><button class="rounded-xl bg-teal-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-teal-700" @click="openConsultation(appt)">Consult →</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="divide-y divide-slate-100 md:hidden"><article v-for="appt in appointments" :key="appt.id" class="p-5"><div class="flex items-start justify-between gap-3"><div><p class="font-semibold text-slate-800">{{ appt.patient?.full_name || 'Unknown patient' }}</p><p class="mt-1 text-xs text-slate-400">PHN {{ appt.patient?.phn || '—' }}</p></div><span class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold capitalize text-amber-700">{{ appt.status }}</span></div><p class="mt-3 text-sm text-slate-600">{{ new Date(appt.scheduled_at).toLocaleString() }}</p><button class="mt-4 w-full rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-bold text-white" @click="openConsultation(appt)">Start consultation</button></article></div>
+      <div v-if="!appointments.length" class="px-6 py-14 text-center"><p class="font-semibold text-slate-700">No active consultations</p><p class="mt-1 text-sm text-slate-400">Your assigned appointments will appear here.</p></div>
+    </div>
 
-    <table v-if="!loading" class="table-auto border w-full">
-      <thead>
-        <tr>
-          <th class="border p-2">Patient</th>
-
-          <th class="border p-2">Date</th>
-
-          <th class="border p-2">Status</th>
-
-          <th class="border p-2"></th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr v-for="appt in appointments" :key="appt.id">
-          <td class="border p-2">
-            {{ appt.patient?.full_name }}
-          </td>
-
-          <td class="border p-2">
-            {{ new Date(appt.scheduled_at).toLocaleString() }}
-          </td>
-
-          <td class="border p-2">
-            {{ appt.status }}
-          </td>
-
-          <td class="border p-2">
-            <button
-              @click="openConsultation(appt)"
-              class="bg-green-600 text-white px-3 py-1 rounded"
-            >
-              Consult
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
     <div
       v-if="showModal"
-      class="fixed inset-0 bg-black/40 flex items-center justify-center"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm"
+      @click.self="showModal = false"
     >
-      <div class="bg-white w-[700px] rounded-lg p-6">
-        <h2 class="text-xl font-bold mb-4">Consultation</h2>
-
-        <p class="mb-4">
-          Patient:
-          <strong>{{ selectedAppointment.patient.full_name }}</strong>
-        </p>
-
-        <textarea
-          v-model="consultation.diagnosis"
-          placeholder="Diagnosis"
-          class="border p-2 rounded w-full mb-3"
-          rows="2"
-        ></textarea>
-
-        <textarea
-          v-model="consultation.consultation_notes"
-          placeholder="Consultation Notes"
-          class="border p-2 rounded w-full mb-3"
-          rows="3"
-        ></textarea>
-
-        <textarea
-          v-model="consultation.prescription"
-          placeholder="Prescription"
-          class="border p-2 rounded w-full mb-3"
-          rows="2"
-        ></textarea>
-
-        <textarea
-          v-model="consultation.treatment_plan"
-          placeholder="Treatment Plan"
-          class="border p-2 rounded w-full mb-3"
-          rows="2"
-        ></textarea>
-
-        <textarea
-          v-model="consultation.follow_up_instructions"
-          placeholder="Follow-up Instructions"
-          class="border p-2 rounded w-full mb-5"
-          rows="2"
-        ></textarea>
-
-        <div class="flex justify-end gap-3">
-          <button
-            @click="showModal = false"
-            class="px-4 py-2 bg-gray-300 rounded"
-          >
-            Cancel
-          </button>
-
-          <button
-            @click="submitConsultation"
-            class="px-4 py-2 bg-green-600 text-white rounded"
-          >
-            Save Consultation
-          </button>
-        </div>
+      <div class="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white shadow-2xl">
+        <div class="sticky top-0 flex items-start justify-between border-b border-slate-100 bg-white px-6 py-5"><div><h2 class="text-xl font-bold text-slate-900">New consultation</h2><p class="mt-1 text-sm text-slate-500">{{ selectedAppointment?.patient?.full_name }}</p></div><button class="rounded-xl bg-slate-100 p-2 text-slate-500 hover:bg-slate-200" @click="showModal = false">✕</button></div>
+        <form class="space-y-5 p-6" @submit.prevent="submitConsultation">
+          <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">Diagnosis</span><textarea v-model="consultation.diagnosis" required class="w-full rounded-xl border border-slate-300 px-3.5 py-3 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20" rows="2"></textarea></label>
+          <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">Consultation notes</span><textarea v-model="consultation.consultation_notes" class="w-full rounded-xl border border-slate-300 px-3.5 py-3 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20" rows="3"></textarea></label>
+          <div class="grid gap-5 sm:grid-cols-2"><label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">Prescription</span><textarea v-model="consultation.prescription" class="w-full rounded-xl border border-slate-300 px-3.5 py-3 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20" rows="3"></textarea></label><label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">Treatment plan</span><textarea v-model="consultation.treatment_plan" class="w-full rounded-xl border border-slate-300 px-3.5 py-3 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20" rows="3"></textarea></label></div>
+          <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">Follow-up instructions</span><textarea v-model="consultation.follow_up_instructions" class="w-full rounded-xl border border-slate-300 px-3.5 py-3 text-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20" rows="2"></textarea></label>
+          <div class="flex justify-end gap-3 border-t border-slate-100 pt-5"><button type="button" class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50" @click="showModal = false">Cancel</button><button type="submit" class="rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-teal-700">Save consultation</button></div>
+        </form>
       </div>
     </div>
-  </div>
+  </AppShell>
 </template>

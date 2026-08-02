@@ -2,6 +2,7 @@
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import api from "../api/client";
+import AppShell from "../components/AppShell.vue";
 
 const route = useRoute();
 
@@ -29,7 +30,7 @@ async function fetchPatient() {
 onMounted(fetchPatient);
 </script>
 <template>
-  <div class="max-w-6xl mx-auto p-6">
+  <AppShell title="Patient Profile" subtitle="Patient information, visits, and clinical history">
     <p v-if="loading" class="text-slate-500">Loading patient...</p>
 
     <p v-else-if="error" class="text-red-600">
@@ -250,5 +251,5 @@ onMounted(fetchPatient);
         </p>
       </div>
     </div>
-  </div>
+  </AppShell>
 </template>
