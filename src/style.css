@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import url("https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600&display=swap");
+@source "./**/*.{vue,js,ts}";
 
 @theme {
   --color-primary-50: #f0fdfa;
