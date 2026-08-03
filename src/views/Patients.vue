@@ -14,6 +14,7 @@ const search = ref("");
 const loading = ref(true);
 const error = ref("");
 const showForm = ref(false);
+const customGender = ref("");
 
 const editingId = ref(null);
 
@@ -41,16 +42,30 @@ async function fetchPatients() {
 }
 
 async function submitForm() {
+  error.value = "";
+
   try {
+    const payload = {
+      ...form.value,
+      gender:
+        form.value.gender === "Other"
+          ? customGender.value.trim()
+          : form.value.gender,
+    };
+
     if (editingId.value) {
-      await api.put(`/patients/${editingId.value}`, form.value);
+      await api.put(`/patients/${editingId.value}`, payload);
     } else {
-      await api.post("/patients", form.value);
+      await api.post("/patients", payload);
     }
     resetForm();
     await fetchPatients();
   } catch (e) {
-    error.value = e.response?.data?.message || "Save failed";
+    const validationMessage = Object.values(e.response?.data?.errors || {})
+      .flat()
+      .find(Boolean);
+    error.value =
+      validationMessage || e.response?.data?.message || "Unable to save patient.";
   }
 }
 
@@ -69,12 +84,16 @@ async function deletePatient(patient) {
 }
 
 function startEdit(patient) {
+  const savedGender = patient.gender || "";
+  const standardGender = ["Male", "Female"].includes(savedGender);
+
   editingId.value = patient.id;
   showForm.value = true;
+  customGender.value = standardGender ? "" : savedGender;
   form.value = {
     full_name: patient.full_name,
     date_of_birth: patient.date_of_birth?.slice(0, 10),
-    gender: patient.gender,
+    gender: standardGender ? savedGender : savedGender ? "Other" : "",
     phone: patient.phone,
     address: patient.address,
     blood_type: patient.blood_type,
@@ -84,6 +103,7 @@ function startEdit(patient) {
 function resetForm() {
   editingId.value = null;
   showForm.value = false;
+  customGender.value = "";
   form.value = {
     full_name: "",
     date_of_birth: "",
@@ -150,9 +170,20 @@ onMounted(fetchPatients);
             required
             class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
-          <input
+          <select
             v-model="form.gender"
-            placeholder="Gender"
+            class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            <option value="">Select gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+          <input
+            v-if="form.gender === 'Other'"
+            v-model="customGender"
+            placeholder="Please specify gender"
+            required
             class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
           <input

@@ -67,8 +67,13 @@ async function submitForm() {
     resetForm();
     await fetchAppointments();
   } catch (e) {
-    console.log(e.response.data);
-    alert(JSON.stringify(e.response.data, null, 2));
+    const validationMessage = Object.values(e.response?.data?.errors || {})
+      .flat()
+      .find(Boolean);
+    error.value =
+      validationMessage ||
+      e.response?.data?.message ||
+      "Unable to save the appointment. Please try again.";
   }
 }
 
@@ -118,13 +123,13 @@ const statusStyles = {
 async function submitConsultation() {
   try {
     await api.post(
-      `/appointments/${consultationAppointment.value.id}/consult`,
+      `/appointments/${consultationAppointment.value.id}/consult`, //kani sya kay e save niya ang patient consultation data sa appointment nga gi select
       consultation.value,
     );
 
     showConsultation.value = false;
 
-    await fetchAppointments();
+    await fetchAppointments(); // then kani sya is refresh sa appointment list aron makita ang updated status sa appointment
   } catch (e) {
     alert("Consultation failed.");
   }
@@ -139,144 +144,142 @@ onMounted(() => {
 
 <template>
   <AppShell title="Appointments" subtitle="Schedule and manage patient visits">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="font-display text-2xl font-semibold text-ink">
-          Appointments
-        </h2>
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="font-display text-2xl font-semibold text-ink">Appointments</h2>
+      <button
+        @click="showForm ? resetForm() : (showForm = true)"
+        class="bg-primary-600 hover:bg-primary-700 transition-colors text-white text-sm font-medium rounded-lg px-4 py-2"
+      >
+        {{ showForm ? "Cancel" : "+ New Appointment" }}
+      </button>
+    </div>
+
+    <div
+      v-if="showForm"
+      class="bg-white rounded-xl border border-slate-200 p-6 mb-6"
+    >
+      <h3 class="font-display text-lg font-semibold text-ink mb-4">
+        {{ editingId ? "Edit" : "New" }} Appointment
+      </h3>
+      <form
+        @submit.prevent="submitForm"
+        class="grid grid-cols-1 sm:grid-cols-2 gap-4"
+      >
+        <select
+          v-model="form.patient_id"
+          required
+          class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+        >
+          <option value="">Select Patient</option>
+          <option v-for="p in patients" :key="p.id" :value="p.id">
+            {{ p.full_name }} ({{ p.phn }})
+          </option>
+        </select>
+
+        <select v-model="form.doctor_name">
+          <option v-for="doc in doctors" :key="doc.id" :value="doc.name">
+            {{ doc.name }} - {{ doc.specialty }}
+          </option>
+        </select>
+
+        <input
+          v-model="form.department"
+          placeholder="Department"
+          class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+        />
+        <input
+          v-model="form.scheduled_at"
+          type="datetime-local"
+          required
+          class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+        />
+
+        <select
+          v-if="editingId"
+          v-model="form.status"
+          class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+        >
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+
+        <textarea
+          v-model="form.notes"
+          placeholder="Notes"
+          class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 sm:col-span-2"
+        ></textarea>
+
         <button
-          @click="showForm ? resetForm() : (showForm = true)"
-          class="bg-primary-600 hover:bg-primary-700 transition-colors text-white text-sm font-medium rounded-lg px-4 py-2"
+          type="submit"
+          class="bg-primary-600 hover:bg-primary-700 transition-colors text-white text-sm font-medium rounded-lg py-2 sm:col-span-2"
         >
-          {{ showForm ? "Cancel" : "+ New Appointment" }}
+          {{ editingId ? "Update" : "Book" }} Appointment
         </button>
-      </div>
+      </form>
+    </div>
 
-      <div
-        v-if="showForm"
-        class="bg-white rounded-xl border border-slate-200 p-6 mb-6"
-      >
-        <h3 class="font-display text-lg font-semibold text-ink mb-4">
-          {{ editingId ? "Edit" : "New" }} Appointment
-        </h3>
-        <form
-          @submit.prevent="submitForm"
-          class="grid grid-cols-1 sm:grid-cols-2 gap-4"
+    <p v-if="error" class="text-red-600 text-sm mb-4">{{ error }}</p>
+    <p v-if="loading && initialLoad" class="text-slate-500">Loading...</p>
+
+    <div
+      v-else
+      class="bg-white rounded-xl border border-slate-200 overflow-hidden"
+    >
+      <table class="w-full text-sm">
+        <thead
+          class="bg-slate-50 text-left text-slate-500 text-xs uppercase tracking-wide"
         >
-          <select
-            v-model="form.patient_id"
-            required
-            class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="">Select Patient</option>
-            <option v-for="p in patients" :key="p.id" :value="p.id">
-              {{ p.full_name }} ({{ p.phn }})
-            </option>
-          </select>
-
-          <select v-model="form.doctor_name">
-            <option v-for="doc in doctors" :key="doc.id" :value="doc.name">
-              {{ doc.name }} - {{ doc.specialty }}
-            </option>
-          </select>
-
-          <input
-            v-model="form.department"
-            placeholder="Department"
-            class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-          />
-          <input
-            v-model="form.scheduled_at"
-            type="datetime-local"
-            required
-            class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-          />
-
-          <select
-            v-if="editingId"
-            v-model="form.status"
-            class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-
-          <textarea
-            v-model="form.notes"
-            placeholder="Notes"
-            class="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 sm:col-span-2"
-          ></textarea>
-
-          <button
-            type="submit"
-            class="bg-primary-600 hover:bg-primary-700 transition-colors text-white text-sm font-medium rounded-lg py-2 sm:col-span-2"
-          >
-            {{ editingId ? "Update" : "Book" }} Appointment
-          </button>
-        </form>
-      </div>
-
-      <p v-if="error" class="text-red-600 text-sm mb-4">{{ error }}</p>
-      <p v-if="loading && initialLoad" class="text-slate-500">Loading...</p>
-
-      <div
-        v-else
-        class="bg-white rounded-xl border border-slate-200 overflow-hidden"
+          <tr>
+            <th class="px-4 py-3">Patient</th>
+            <th class="px-4 py-3">Doctor</th>
+            <th class="px-4 py-3">Department</th>
+            <th class="px-4 py-3">Date</th>
+            <th class="px-4 py-3">Status</th>
+            <th class="px-4 py-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <tr v-for="appt in appointments" :key="appt.id">
+            <td class="px-4 py-3 font-medium text-ink">
+              {{ appt.patient?.full_name || "—" }}
+            </td>
+            <td class="px-4 py-3">{{ appt.doctor_name || "Unassigned" }}</td>
+            <td class="px-4 py-3">{{ appt.department }}</td>
+            <td class="px-4 py-3">
+              {{ new Date(appt.scheduled_at).toLocaleString() }}
+            </td>
+            <td class="px-4 py-3">
+              <span
+                class="inline-block px-2 py-1 rounded-full text-xs font-medium"
+                :class="statusStyles[appt.status]"
+                >{{ appt.status }}</span
+              >
+            </td>
+            <td class="px-4 py-3 space-x-2">
+              <button
+                @click="startEdit(appt)"
+                class="text-primary-600 hover:text-primary-700 font-medium"
+              >
+                Edit
+              </button>
+              <button
+                @click="deleteAppointment(appt.id)"
+                class="text-red-500 hover:text-red-600 font-medium"
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p
+        v-if="!appointments.length"
+        class="px-4 py-6 text-center text-slate-400 text-sm"
       >
-        <table class="w-full text-sm">
-          <thead
-            class="bg-slate-50 text-left text-slate-500 text-xs uppercase tracking-wide"
-          >
-            <tr>
-              <th class="px-4 py-3">Patient</th>
-              <th class="px-4 py-3">Doctor</th>
-              <th class="px-4 py-3">Department</th>
-              <th class="px-4 py-3">Date</th>
-              <th class="px-4 py-3">Status</th>
-              <th class="px-4 py-3">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
-            <tr v-for="appt in appointments" :key="appt.id">
-              <td class="px-4 py-3 font-medium text-ink">
-                {{ appt.patient?.full_name || "—" }}
-              </td>
-              <td class="px-4 py-3">{{ appt.doctor_name || "Unassigned" }}</td>
-              <td class="px-4 py-3">{{ appt.department }}</td>
-              <td class="px-4 py-3">
-                {{ new Date(appt.scheduled_at).toLocaleString() }}
-              </td>
-              <td class="px-4 py-3">
-                <span
-                  class="inline-block px-2 py-1 rounded-full text-xs font-medium"
-                  :class="statusStyles[appt.status]"
-                  >{{ appt.status }}</span
-                >
-              </td>
-              <td class="px-4 py-3 space-x-2">
-                <button
-                  @click="startEdit(appt)"
-                  class="text-primary-600 hover:text-primary-700 font-medium"
-                >
-                  Edit
-                </button>
-                <button
-                  @click="deleteAppointment(appt.id)"
-                  class="text-red-500 hover:text-red-600 font-medium"
-                >
-                  Delete
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <p
-          v-if="!appointments.length"
-          class="px-4 py-6 text-center text-slate-400 text-sm"
-        >
-          No appointments found.
-        </p>
-      </div>
+        No appointments found.
+      </p>
+    </div>
   </AppShell>
 </template>

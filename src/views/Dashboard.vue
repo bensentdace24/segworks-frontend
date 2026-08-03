@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import { RouterLink, useRouter } from "vue-router";
 import api from "../api/client";
 import { useAuthStore } from "../stores/auth";
 
@@ -77,24 +77,28 @@ const adminStats = computed(() => [
     value: totalUsers.value,
     icon: "users",
     tone: "teal",
+    to: null,
   },
   {
     label: "Total patients",
     value: totalPatients.value,
     icon: "patients",
     tone: "blue",
+    to: "/patients",
   },
   {
     label: "Appointments",
     value: totalAppointments.value,
     icon: "calendar",
     tone: "orange",
+    to: "/appointments",
   },
   {
     label: "Medical records",
     value: totalRecords.value,
     icon: "records",
     tone: "violet",
+    to: "/medical-records",
   },
 ]);
 
@@ -491,19 +495,13 @@ onMounted(fetchDashboard);
               </p>
             </div>
             <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-              <router-link
+              <component
                 v-for="stat in adminStats"
                 :key="stat.label"
-                :to="
-                  stat.icon === 'users'
-                    ? '/doctors'
-                    : stat.icon === 'patients'
-                      ? '/patients'
-                      : stat.icon === 'calendar'
-                        ? '/appointments'
-                        : '/medical-records'
-                "
-                class="stat-card group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+                :is="stat.to ? RouterLink : 'div'"
+                :to="stat.to || undefined"
+                class="stat-card group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition"
+                :class="stat.to ? 'hover:-translate-y-0.5 hover:shadow-lg' : ''"
               >
                 <div class="flex items-start justify-between">
                   <div
@@ -523,6 +521,7 @@ onMounted(fetchDashboard);
                     </svg>
                   </div>
                   <svg
+                    v-if="stat.to"
                     viewBox="0 0 24 24"
                     class="h-4 w-4 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-slate-500"
                     fill="none"
@@ -540,7 +539,7 @@ onMounted(fetchDashboard);
                 <p class="mt-1 text-sm font-medium text-slate-500">
                   {{ stat.label }}
                 </p>
-              </router-link>
+              </component>
             </div>
           </section>
 
